@@ -1,0 +1,42 @@
+[gd_scene load_steps=2 format=2]
+
+[sub_resource type="StyleBoxFlat" id=1]
+bg_color = Color( 0.0431373, 0.0431373, 0.0431373, 1 )
+
+[node name="Main" type="Node2D"]
+
+[node name="HTTPRequest" type="HTTPRequest" parent="."]
+
+[node name="Node" type="Node2D" parent="."]
+position = Vector2( 160.232, 32.643 )
+
+[node name="DownloadButton" type="Button" parent="Node"]
+margin_left = 167.838
+margin_top = -0.0306168
+margin_right = 284.838
+margin_bottom = 43.9694
+text = "DOWNLOAD"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TitleIdInput" type="TextEdit" parent="Node"]
+margin_left = 1.49829
+margin_top = 0.749153
+margin_right = 161.498
+margin_bottom = 40.7492
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="OuputLabel" type="RichTextLabel" parent="Node"]
+margin_left = -139.0
+margin_top = 71.0
+margin_right = 415.0
+margin_bottom = 896.0
+custom_styles/normal = SubResource( 1 )
+custom_colors/default_color = Color( 0.972549, 0.972549, 0.972549, 1 )
+text = "dafdaf"
+__meta__ = {
+"_edit_use_anchors_": false
+}
