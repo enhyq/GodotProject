@@ -84,6 +84,26 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="FileDialog" type="FileDialog" parent="."]
+margin_left = 19.0
+margin_top = 80.0
+margin_right = 574.0
+margin_bottom = 368.0
+popup_exclusive = true
+window_title = "디렉토리 열기"
+dialog_hide_on_ok = true
+mode = 2
+access = 2
+current_dir = "/Users/admin/Documents/GitHub/GodotProject/webtoon_downloader"
+current_path = "/Users/admin/Documents/GitHub/GodotProject/webtoon_downloader/"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HTTPRequestImg" type="HTTPRequest" parent="."]
+
 [connection signal="request_completed" from="HTTPRequest" to="." method="_on_HTTPRequest_request_completed"]
 [connection signal="pressed" from="Node/DownloadButton" to="." method="_on_DownloadButton_pressed"]
 [connection signal="value_changed" from="Node/EpisodeFrom" to="." method="_on_EpisodeFrom_value_changed"]
+[connection signal="confirmed" from="FileDialog" to="." method="_on_FileDialog_confirmed"]
+[connection signal="request_completed" from="HTTPRequestImg" to="." method="_on_HTTPRequestImg_request_completed"]
