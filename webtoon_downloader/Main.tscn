@@ -33,7 +33,7 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="OuputLabel" type="RichTextLabel" parent="Node"]
+[node name="OuputDisplay" type="RichTextLabel" parent="Node"]
 margin_left = -139.0
 margin_top = 71.0
 margin_right = 415.0
@@ -44,7 +44,7 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="EpisodeFrom" type="SpinBox" parent="Node"]
+[node name="EpisodeFromInput" type="SpinBox" parent="Node"]
 margin_left = 64.1447
 margin_top = 10.6908
 margin_right = 138.145
@@ -58,14 +58,14 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="EpisodeTo" type="SpinBox" parent="Node"]
+[node name="EpisodeToInput" type="SpinBox" parent="Node"]
 margin_left = 173.855
 margin_top = 11.9019
 margin_right = 247.855
 margin_bottom = 35.9019
 min_value = 1.0
 max_value = 9999.0
-value = 1.0
+value = 2.0
 rounded = true
 align = 2
 __meta__ = {
@@ -94,16 +94,12 @@ window_title = "디렉토리 열기"
 dialog_hide_on_ok = true
 mode = 2
 access = 2
-current_dir = "/Users/admin/Documents/GitHub/GodotProject/webtoon_downloader"
-current_path = "/Users/admin/Documents/GitHub/GodotProject/webtoon_downloader/"
+current_dir = "/tmp/guest-6fr2gu/Desktop/GodotProject/webtoon_downloader"
+current_path = "/tmp/guest-6fr2gu/Desktop/GodotProject/webtoon_downloader/"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="HTTPRequestImg" type="HTTPRequest" parent="."]
-
-[connection signal="request_completed" from="HTTPRequest" to="." method="_on_HTTPRequest_request_completed"]
 [connection signal="pressed" from="Node/DownloadButton" to="." method="_on_DownloadButton_pressed"]
-[connection signal="value_changed" from="Node/EpisodeFrom" to="." method="_on_EpisodeFrom_value_changed"]
+[connection signal="value_changed" from="Node/EpisodeFromInput" to="." method="_on_EpisodeFrom_value_changed"]
 [connection signal="confirmed" from="FileDialog" to="." method="_on_FileDialog_confirmed"]
-[connection signal="request_completed" from="HTTPRequestImg" to="." method="_on_HTTPRequestImg_request_completed"]
