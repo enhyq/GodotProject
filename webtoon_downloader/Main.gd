@@ -161,7 +161,7 @@ func _on_downloadMultipleImgs_request_completed(result, response_code, headers, 
 			if error != OK:
 				printerr("Couldn't load the image.")
 			
-			print_on_output_display("Saving image to  " + img_save_path + "/" + str(img_urls.size()) + ".jpeg")
+			print_on_output_display("Saving image to  " + img_save_path + "/" + str(img_urls.size()))
 			image.save_png(img_save_path + "/" + str(len(img_urls)) + ".png")
 		else:
 			printerr("response_code:", response_code)

@@ -94,8 +94,8 @@ window_title = "디렉토리 열기"
 dialog_hide_on_ok = true
 mode = 2
 access = 2
-current_dir = "/tmp/guest-6fr2gu/Desktop/GodotProject/webtoon_downloader"
-current_path = "/tmp/guest-6fr2gu/Desktop/GodotProject/webtoon_downloader/"
+current_dir = "/tmp/guest-hox0yn/Desktop/GodotProject/webtoon_downloader"
+current_path = "/tmp/guest-hox0yn/Desktop/GodotProject/webtoon_downloader/"
 __meta__ = {
 "_edit_use_anchors_": false
 }
