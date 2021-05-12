@@ -164,14 +164,20 @@ func _on_downloadMultipleImgs_request_completed(result, response_code, headers, 
 			if error != OK:
 				printerr("Couldn't load the image.")
 			
-			# merge images together vertically
+			# 1 merge images together vertically
 			# this cannot be done with godot api because it only supports images size of 16384×16384 pixels
 #			print_on_output_display("Downloading merging image: " + str(IMG_URLS.size()))
 #			MERGED_IMAGE = $MergeImage.merge_image_vertical(MERGED_IMAGE, image)
 			
-			# save images individually
+			# 2 save images individually
 			print_on_output_display("Saving image to  " + IMG_SAVE_PATH + "/" + str(IMG_URLS.size()))
-			image.save_png(IMG_SAVE_PATH + "/" + str(len(IMG_URLS)))
+#			image.save_png(IMG_SAVE_PATH + "/" + str(len(IMG_URLS)))
+
+			# 3 use file api instead of imgaes for jpg saving
+			var file = File.new()
+			file.open(IMG_SAVE_PATH + "/" + str(len(IMG_URLS)) + ".jpg", file.WRITE)
+			file.store_buffer(image.get_data())
+			file.close()
 		else:
 			printerr("response_code:", response_code)
 	else:
@@ -190,6 +196,7 @@ func _on_downloadMultipleImgs_request_completed(result, response_code, headers, 
 func save_image_to_local(image):
 	print_on_output_display("Saving image to  " + IMG_SAVE_PATH + "/test.png")
 	image.save_png(IMG_SAVE_PATH + "/test")
+	print(image.get_format())
 
 # prints http request result, response, and headers to output display -- for debugging
 func print_HTTPRequest_RRH_on_output_display(result, response_code, headers):
