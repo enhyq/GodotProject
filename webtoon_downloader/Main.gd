@@ -2,10 +2,10 @@ extends Node2D
 
 
 # global variables to store shared data
-var img_urls:Array = []
-var img_save_path:String
-var request_header
-var current_episode:int # for storing currently downloading episode number
+var IMG_URLS:Array = []
+var IMG_SAVE_PATH:String
+var CURRENT_EPISODE:int # for storing currently downloading episode number
+var MERGED_IMAGE = Image.new()
 
 # node shortcuts
 var _output_display
@@ -15,10 +15,10 @@ var _episode_to_input
 
 
 func _ready():
-	_output_display = $Node/OuputDisplay
-	_titleid_input = $Node/TitleIdInput
-	_episode_from_input = $Node/EpisodeFromInput
-	_episode_to_input = $Node/EpisodeToInput
+	_output_display = $UINode/OuputDisplay
+	_titleid_input = $UINode/TitleIdInput
+	_episode_from_input = $UINode/EpisodeFromInput
+	_episode_to_input = $UINode/EpisodeToInput
 
 
 func get_titleid_val():
@@ -43,9 +43,7 @@ func append_to_text_file(file_path:String, string:String):
 	var error = file.open(file_path, file.READ_WRITE)
 	if error != OK:
 		if error == ERR_FILE_NOT_FOUND:
-			file.close()
 			file.open(file_path, file.WRITE)
-			file.close()
 		else:
 			printerr("Error has accured while trying to read file...  error code", error)
 			return error
@@ -72,20 +70,20 @@ func _on_DownloadButton_pressed():
 # ***** 2 *****
 func _on_getWebtoonPage_request_completed(result, response_code, headers, body):
 	print_HTTPRequest_RRH_on_output_display(result, response_code, headers)
-	img_urls.clear()
-	img_urls = parse_img_data_from_html(body)
+	IMG_URLS.clear()
+	IMG_URLS = parse_img_data_from_html(body)
 	
 	# debug
-	for i in img_urls:
-		append_to_text_file("/tmp/guest-6fr2gu/Desktop/test.txt", i)
+	for i in IMG_URLS:
+		append_to_text_file("/tmp/guest-bzamae/Desktop/test.txt", i)
 	
-	if img_urls != []:
+	if IMG_URLS != []:
 		$FileDialog.popup_centered()
 	else:
 		print_on_output_display("No Imgage url was Found...")
 
 
-# ***** 2.5 ***** (used in step 2)
+# ***** 2.1 ***** (used in step 2)
 # extracts img urls from webtoon page
 func parse_img_data_from_html(html_data_buffer:PoolByteArray) -> Array:
 	var img_scr_list = []
@@ -131,29 +129,34 @@ func parse_img_data_from_html(html_data_buffer:PoolByteArray) -> Array:
 	return img_scr_list
 
 
+# need 2.2 function to parse episode title from webtoon page
+
+
 # ***** 3 *****
+# sets IMG_FILE_PATH value
 func _on_FileDialog_confirmed():
-	img_save_path = $FileDialog.current_dir
-	download_img_to_local()
+	IMG_SAVE_PATH = $FileDialog.current_dir
+	request_for_image()
 
 
 # ***** 4 *****
-func download_img_to_local():
-	request_header = ["User-Agent: Mozilla/5.1 (Windows NT 10.1; Win64; x64) AppleWebKit/536.37 (KHTML, like Gecko) Chrome/91.1.4480.73 Safari/535.36",
+func request_for_image():
+	var request_header = ["User-Agent: Mozilla/5.1 (Windows NT 10.1; Win64; x64) AppleWebKit/536.37 (KHTML, like Gecko) Chrome/91.1.4480.73 Safari/535.36",
 				 "Referer: " + create_naver_comic_url(get_titleid_val(), get_episode_to_val()) 
 				]
+	
+	# controls signal conenction (maybe take it out as a separate function later...)
 	if $HTTPRequest.is_connected("request_completed", self, "_on_getWebtoonPage_request_completed"):
 		$HTTPRequest.disconnect("request_completed", self, "_on_getWebtoonPage_request_completed")
 	if not $HTTPRequest.is_connected("request_completed", self, "_on_downloadMultipleImgs_request_completed"): 
 		$HTTPRequest.connect("request_completed", self, "_on_downloadMultipleImgs_request_completed")
-	$HTTPRequest.request(img_urls.pop_back(), request_header)
-	print(img_urls.size())
+	$HTTPRequest.request(IMG_URLS.pop_back(), request_header)
 
 
 # ***** 5 *****
-# this fuction is requires global variable "img_urls"
+# this fuction is requires global variable "IMG_URLS"
 func _on_downloadMultipleImgs_request_completed(result, response_code, headers, body):
-	print_HTTPRequest_RRH_on_output_display(result, response_code, headers)
+#	print_HTTPRequest_RRH_on_output_display(result, response_code, headers)
 	if result == HTTPRequest.RESULT_SUCCESS: 
 		if response_code != 403:
 			var image = Image.new()
@@ -161,17 +164,32 @@ func _on_downloadMultipleImgs_request_completed(result, response_code, headers, 
 			if error != OK:
 				printerr("Couldn't load the image.")
 			
-			print_on_output_display("Saving image to  " + img_save_path + "/" + str(img_urls.size()))
-			image.save_png(img_save_path + "/" + str(len(img_urls)) + ".png")
+			# merge images together vertically
+			# this cannot be done with godot api because it only supports images size of 16384×16384 pixels
+#			print_on_output_display("Downloading merging image: " + str(IMG_URLS.size()))
+#			MERGED_IMAGE = $MergeImage.merge_image_vertical(MERGED_IMAGE, image)
+			
+			# save images individually
+			print_on_output_display("Saving image to  " + IMG_SAVE_PATH + "/" + str(IMG_URLS.size()))
+			image.save_png(IMG_SAVE_PATH + "/" + str(len(IMG_URLS)))
 		else:
 			printerr("response_code:", response_code)
 	else:
 		printerr("Unexpected result from HTTPRequest...  result code:", result)
 	
-	print(img_urls.size())
-	if img_urls.size() > 0:
-		download_img_to_local()
+	if IMG_URLS.size() > 0:
+		# if urls are left, keep downloading and merging
+		request_for_image()
+	else:
+		# save image to local device
+		save_image_to_local(MERGED_IMAGE)
+		# after saving, clears any data from MERGED_IMAGE
+		MERGED_IMAGE = Image.new()
 
+
+func save_image_to_local(image):
+	print_on_output_display("Saving image to  " + IMG_SAVE_PATH + "/test.png")
+	image.save_png(IMG_SAVE_PATH + "/test")
 
 # prints http request result, response, and headers to output display -- for debugging
 func print_HTTPRequest_RRH_on_output_display(result, response_code, headers):
@@ -183,6 +201,7 @@ func print_HTTPRequest_RRH_on_output_display(result, response_code, headers):
 	print_on_output_display("##################\n\n")
 
 
+# this prevents episode_to from being lower than episode_from value
 func _on_EpisodeFrom_value_changed(value):
 	if value > get_episode_to_val():
 		_episode_to_input.value = value
