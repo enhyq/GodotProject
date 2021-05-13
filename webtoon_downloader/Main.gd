@@ -7,6 +7,7 @@ var IMG_SAVE_PATH:String
 var CURRENT_EPISODE_NUM:int # for storing currently downloading episode number
 var CURRENT_EPISODE_NAME # current episode name
 var MERGED_IMAGE = Image.new()
+var END_EPISODE_NUM
 
 # node shortcuts
 var _output_display
@@ -67,25 +68,32 @@ func create_naver_comic_url(titleId, episode) -> String:
 
 # ***** 1 *****
 func _on_DownloadButton_pressed():
+	CURRENT_EPISODE_NUM = get_episode_from_val()
+	END_EPISODE_NUM = get_episode_to_val()
 	# download a single episode
-	if get_episode_from_val() == get_episode_to_val():
-		CURRENT_EPISODE_NUM = get_episode_to_val()
-		
+	if get_episode_from_val() == get_episode_to_val():		
 		# controls signal conenction (maybe take it out as a separate function later...)
 		if $HTTPRequest.is_connected("request_completed", self, "_on_downloadMultipleImgs_request_completed"): 
 			$HTTPRequest.disconnect("request_completed", self, "_on_downloadMultipleImgs_request_completed")
 		if not $HTTPRequest.is_connected("request_completed", self, "_on_getWebtoonPage_request_completed"):
 			$HTTPRequest.connect("request_completed", self, "_on_getWebtoonPage_request_completed")
 
-		$HTTPRequest.request(create_naver_comic_url(get_titleid_val(), get_episode_to_val()))
+		$HTTPRequest.request(create_naver_comic_url(get_titleid_val(), CURRENT_EPISODE_NUM))
 	# download multiple episodes
 	else:
-		print_on_output_display("downloading multiple episode function is not ready yet!")
+#		print_on_output_display("downloading multiple episode function is not ready yet!")
+		print_on_output_display("BEGINNING MULTIPLE DOWNLOADS")
+		# controls signal conenction (maybe take it out as a separate function later...)
+		if $HTTPRequest.is_connected("request_completed", self, "_on_downloadMultipleImgs_request_completed"): 
+			$HTTPRequest.disconnect("request_completed", self, "_on_downloadMultipleImgs_request_completed")
+		if not $HTTPRequest.is_connected("request_completed", self, "_on_getWebtoonPage_request_completed"):
+			$HTTPRequest.connect("request_completed", self, "_on_getWebtoonPage_request_completed")
 
+		$HTTPRequest.request(create_naver_comic_url(get_titleid_val(), CURRENT_EPISODE_NUM))
 
 # ***** 2 *****
-func _on_getWebtoonPage_request_completed(result, response_code, headers, body):
-	print_HTTPRequest_RRH_on_output_display(result, response_code, headers)
+func _on_getWebtoonPage_request_completed(_result, _response_code, _headers, body):
+#	print_HTTPRequest_RRH_on_output_display(result, response_code, headers)
 	IMG_URLS.clear()
 	IMG_URLS = parse_img_data_from_html(body)
 	
@@ -162,7 +170,7 @@ func _on_FileDialog_confirmed():
 # ***** 4 *****
 func request_for_image():
 	var request_header = ["User-Agent: Mozilla/5.1 (Windows NT 10.1; Win64; x64) AppleWebKit/536.37 (KHTML, like Gecko) Chrome/91.1.4480.73 Safari/535.36",
-				 "Referer: " + create_naver_comic_url(get_titleid_val(), get_episode_to_val()) 
+				 "Referer: " + create_naver_comic_url(get_titleid_val(), CURRENT_EPISODE_NUM) 
 				]
 	
 	# controls signal conenction (maybe take it out as a separate function later...)
@@ -214,6 +222,18 @@ func _on_downloadMultipleImgs_request_completed(result, response_code, _headers,
 	else:
 		# when all the img urls are downloaded
 		print_on_output_display("Download Complete")
+		if CURRENT_EPISODE_NUM == END_EPISODE_NUM:
+			print_on_output_display("ALL DOWNLOADS COMPLETED")
+		elif CURRENT_EPISODE_NUM < END_EPISODE_NUM:
+			CURRENT_EPISODE_NUM += 1
+			
+			# controls signal conenction (maybe take it out as a separate function later...)
+			if $HTTPRequest.is_connected("request_completed", self, "_on_downloadMultipleImgs_request_completed"): 
+				$HTTPRequest.disconnect("request_completed", self, "_on_downloadMultipleImgs_request_completed")
+			if not $HTTPRequest.is_connected("request_completed", self, "_on_getWebtoonPage_request_completed"):
+				$HTTPRequest.connect("request_completed", self, "_on_getWebtoonPage_request_completed")
+
+			$HTTPRequest.request(create_naver_comic_url(get_titleid_val(), CURRENT_EPISODE_NUM))
 		
 
 func save_image_to_local(image:Image):

@@ -41,6 +41,7 @@ margin_right = 415.0
 margin_bottom = 896.0
 custom_styles/normal = SubResource( 1 )
 custom_colors/default_color = Color( 0.972549, 0.972549, 0.972549, 1 )
+scroll_following = true
 __meta__ = {
 "_edit_use_anchors_": false
 }
