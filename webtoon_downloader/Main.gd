@@ -39,6 +39,13 @@ func print_on_output_display(string:String, newline:bool = true):
 
 # function for saving data on OS file -- for debugging
 func append_to_text_file(file_path:String, string:String):
+	var dir = Directory.new()
+	if dir.file_exists(file_path):
+		pass
+	else:
+		dir.make_dir_recursive(file_path)
+		dir.remove(file_path)
+	
 	var file = File.new()
 	var error = file.open(file_path, file.READ_WRITE)
 	if error != OK:
@@ -73,9 +80,9 @@ func _on_getWebtoonPage_request_completed(result, response_code, headers, body):
 	IMG_URLS.clear()
 	IMG_URLS = parse_img_data_from_html(body)
 	
-	# debug
-	for i in IMG_URLS:
-		append_to_text_file("/tmp/guest-bzamae/Desktop/test.txt", i)
+	# debug in linux pc only!!!!
+#	for i in IMG_URLS:
+#		append_to_text_file("/tmp/guest-ibezl0/Desktop/doesthiswork/test.txt", i)
 	
 	if IMG_URLS != []:
 		$FileDialog.popup_centered()
@@ -155,7 +162,7 @@ func request_for_image():
 
 # ***** 5 *****
 # this fuction is requires global variable "IMG_URLS"
-func _on_downloadMultipleImgs_request_completed(result, response_code, headers, body):
+func _on_downloadMultipleImgs_request_completed(result, response_code, _headers, body):
 #	print_HTTPRequest_RRH_on_output_display(result, response_code, headers)
 	if result == HTTPRequest.RESULT_SUCCESS: 
 		if response_code != 403:
@@ -170,13 +177,13 @@ func _on_downloadMultipleImgs_request_completed(result, response_code, headers, 
 #			MERGED_IMAGE = $MergeImage.merge_image_vertical(MERGED_IMAGE, image)
 			
 			# 2 save images individually
-			print_on_output_display("Saving image to  " + IMG_SAVE_PATH + "/" + str(IMG_URLS.size()))
+			print_on_output_display("Saving image to  " + IMG_SAVE_PATH + "/" + str(IMG_URLS.size()+1))
 #			image.save_png(IMG_SAVE_PATH + "/" + str(len(IMG_URLS)))
 
 			# 3 use file api instead of imgaes for jpg saving
 			var file = File.new()
-			file.open(IMG_SAVE_PATH + "/" + str(len(IMG_URLS)) + ".jpg", file.WRITE)
-			file.store_buffer(image.get_data())
+			file.open(IMG_SAVE_PATH + "/" + str(len(IMG_URLS)+1), file.WRITE)
+			file.store_buffer(body)
 			file.close()
 		else:
 			printerr("response_code:", response_code)
@@ -187,16 +194,13 @@ func _on_downloadMultipleImgs_request_completed(result, response_code, headers, 
 		# if urls are left, keep downloading and merging
 		request_for_image()
 	else:
-		# save image to local device
-		save_image_to_local(MERGED_IMAGE)
-		# after saving, clears any data from MERGED_IMAGE
-		MERGED_IMAGE = Image.new()
+		# when all the img urls are downloaded
+		print_on_output_display("Download Complete")
+		
 
-
-func save_image_to_local(image):
+func save_image_to_local(image:Image):
 	print_on_output_display("Saving image to  " + IMG_SAVE_PATH + "/test.png")
 	image.save_png(IMG_SAVE_PATH + "/test")
-	print(image.get_format())
 
 # prints http request result, response, and headers to output display -- for debugging
 func print_HTTPRequest_RRH_on_output_display(result, response_code, headers):
