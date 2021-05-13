@@ -4,7 +4,8 @@ extends Node2D
 # global variables to store shared data
 var IMG_URLS:Array = []
 var IMG_SAVE_PATH:String
-var CURRENT_EPISODE:int # for storing currently downloading episode number
+var CURRENT_EPISODE_NUM:int # for storing currently downloading episode number
+var CURRENT_EPISODE_NAME # current episode name
 var MERGED_IMAGE = Image.new()
 
 # node shortcuts
@@ -52,7 +53,7 @@ func append_to_text_file(file_path:String, string:String):
 		if error == ERR_FILE_NOT_FOUND:
 			file.open(file_path, file.WRITE)
 		else:
-			printerr("Error has accured while trying to read file...  error code", error)
+			print_debug("Error has accured while trying to read file...  error code", error)
 			return error
 	file.seek_end()
 	file.store_line(string)
@@ -66,10 +67,18 @@ func create_naver_comic_url(titleId, episode) -> String:
 
 # ***** 1 *****
 func _on_DownloadButton_pressed():
-	# download single episode page
+	# download a single episode
 	if get_episode_from_val() == get_episode_to_val():
-		$HTTPRequest.connect("request_completed", self, "_on_getWebtoonPage_request_completed")
+		CURRENT_EPISODE_NUM = get_episode_to_val()
+		
+		# controls signal conenction (maybe take it out as a separate function later...)
+		if $HTTPRequest.is_connected("request_completed", self, "_on_downloadMultipleImgs_request_completed"): 
+			$HTTPRequest.disconnect("request_completed", self, "_on_downloadMultipleImgs_request_completed")
+		if not $HTTPRequest.is_connected("request_completed", self, "_on_getWebtoonPage_request_completed"):
+			$HTTPRequest.connect("request_completed", self, "_on_getWebtoonPage_request_completed")
+
 		$HTTPRequest.request(create_naver_comic_url(get_titleid_val(), get_episode_to_val()))
+	# download multiple episodes
 	else:
 		print_on_output_display("downloading multiple episode function is not ready yet!")
 
@@ -91,22 +100,23 @@ func _on_getWebtoonPage_request_completed(result, response_code, headers, body):
 
 
 # ***** 2.1 ***** (used in step 2)
+# need 2.2 function to parse episode title from webtoon page
 # extracts img urls from webtoon page
 func parse_img_data_from_html(html_data_buffer:PoolByteArray) -> Array:
 	var img_scr_list = []
 	var xml = XMLParser.new()
 	var error = xml.open_buffer(html_data_buffer)
 	if error != OK:
-		printerr("Error has accured while trying to OPEN xml buffer...  error code:", error)
+		print_debug("Error has accured while trying to OPEN xml buffer...  error code:", error)
 		return []
 		
 	error = xml.read()	# begin reading the first line of xml
 	if error != OK:
-		printerr("Error has accured while trying to READ xml buffer...  error code:", error)
+		print_debug("Error has accured while trying to READ xml buffer...  error code:", error)
 		return []
 	
 #	var temp_path = "C:/Users/admin/Documents/GitHub/test.txt" # for windows computer debug
-	var temp_path = "/tmp/guest-6fr2gu/Desktop/test.txt" # for linux computer debug
+#	var temp_path = "/tmp/guest-6fr2gu/Desktop/test.txt" # for linux computer debug
 #	var path= "user://test.txt"
 	
 	while !error:
@@ -122,6 +132,11 @@ func parse_img_data_from_html(html_data_buffer:PoolByteArray) -> Array:
 #						string += xml.get_attribute_name(i) + " --> " + xml.get_attribute_value(i) + "\n"
 #					string += "\n\n"
 #					append_to_text_file(temp_path, string)
+				if xml.get_node_name() == "meta":
+					var value = xml.get_named_attribute_value_safe("property")
+					if value == "og:description":
+#						print_debug(xml.get_named_attribute_value_safe("content"))
+						CURRENT_EPISODE_NAME = xml.get_named_attribute_value_safe("content")
 			_:
 				pass
 		error = xml.read()
@@ -130,19 +145,17 @@ func parse_img_data_from_html(html_data_buffer:PoolByteArray) -> Array:
 			if error == ERR_FILE_EOF:
 				break
 			else:
-				printerr("Error has accured while trying to READ xml buffer...  error code:", error)
+				print_debug("Error has accured while trying to READ xml buffer...  error code:", error)
 				return []
 
 	return img_scr_list
-
-
-# need 2.2 function to parse episode title from webtoon page
 
 
 # ***** 3 *****
 # sets IMG_FILE_PATH value
 func _on_FileDialog_confirmed():
 	IMG_SAVE_PATH = $FileDialog.current_dir
+	IMG_SAVE_PATH += "/" + episode_number_to_string(CURRENT_EPISODE_NUM) + "_" + CURRENT_EPISODE_NAME
 	request_for_image()
 
 
@@ -169,7 +182,7 @@ func _on_downloadMultipleImgs_request_completed(result, response_code, _headers,
 			var image = Image.new()
 			var error = image.load_jpg_from_buffer(body)
 			if error != OK:
-				printerr("Couldn't load the image.")
+				print_debug("Couldn't load the image.")
 			
 			# 1 merge images together vertically
 			# this cannot be done with godot api because it only supports images size of 16384×16384 pixels
@@ -181,14 +194,19 @@ func _on_downloadMultipleImgs_request_completed(result, response_code, _headers,
 #			image.save_png(IMG_SAVE_PATH + "/" + str(len(IMG_URLS)))
 
 			# 3 use file api instead of imgaes for jpg saving
+			var dir = Directory.new()
+			if dir.file_exists(IMG_SAVE_PATH):
+				pass
+			else:
+				dir.make_dir_recursive(IMG_SAVE_PATH)
 			var file = File.new()
 			file.open(IMG_SAVE_PATH + "/" + str(len(IMG_URLS)+1), file.WRITE)
 			file.store_buffer(body)
 			file.close()
 		else:
-			printerr("response_code:", response_code)
+			print_debug("response_code:", response_code)
 	else:
-		printerr("Unexpected result from HTTPRequest...  result code:", result)
+		print_debug("Unexpected result from HTTPRequest...  result code:", result)
 	
 	if IMG_URLS.size() > 0:
 		# if urls are left, keep downloading and merging
@@ -217,3 +235,7 @@ func _on_EpisodeFrom_value_changed(value):
 	if value > get_episode_to_val():
 		_episode_to_input.value = value
 	_episode_to_input.min_value = value
+
+
+func episode_number_to_string(num:int) -> String:
+	return "%04d" % num

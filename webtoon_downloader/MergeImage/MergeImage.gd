@@ -4,10 +4,6 @@ var img_src_dir = "res://MergeImage/sample_image/"
 
 func _ready():
 	pass
-	var img = Image.new()
-	print(img.get_height())
-	
-	
 #	var a = load_image_file(img_src_dir+"sample.png")
 #	var b = load_image_file(img_src_dir+"sample.png")
 #
