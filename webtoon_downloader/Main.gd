@@ -3,10 +3,10 @@ extends Node2D
 
 # global variables to store shared data
 var IMG_URLS:Array = []
-var IMG_SAVE_PATH:String
+var IMG_SAVE_PATH := ""
 var CURRENT_EPISODE_NUM:int # for storing currently downloading episode number
 var CURRENT_EPISODE_NAME # current episode name
-var MERGED_IMAGE = Image.new()
+var MERGED_IMAGE = Image.new() # not used anymore, cannot merge large images with godot api
 var END_EPISODE_NUM
 
 # node shortcuts
@@ -70,8 +70,9 @@ func create_naver_comic_url(titleId, episode) -> String:
 func _on_DownloadButton_pressed():
 	CURRENT_EPISODE_NUM = get_episode_from_val()
 	END_EPISODE_NUM = get_episode_to_val()
+	
 	# download a single episode
-	if get_episode_from_val() == get_episode_to_val():		
+	if get_episode_from_val() == get_episode_to_val():
 		# controls signal conenction (maybe take it out as a separate function later...)
 		if $HTTPRequest.is_connected("request_completed", self, "_on_downloadMultipleImgs_request_completed"): 
 			$HTTPRequest.disconnect("request_completed", self, "_on_downloadMultipleImgs_request_completed")
@@ -79,6 +80,7 @@ func _on_DownloadButton_pressed():
 			$HTTPRequest.connect("request_completed", self, "_on_getWebtoonPage_request_completed")
 
 		$HTTPRequest.request(create_naver_comic_url(get_titleid_val(), CURRENT_EPISODE_NUM))
+	
 	# download multiple episodes
 	else:
 #		print_on_output_display("downloading multiple episode function is not ready yet!")
@@ -102,7 +104,13 @@ func _on_getWebtoonPage_request_completed(_result, _response_code, _headers, bod
 #		append_to_text_file("/tmp/guest-ibezl0/Desktop/doesthiswork/test.txt", i)
 	
 	if IMG_URLS != []:
-		$FileDialog.popup_centered()
+		# downlaoding single episode
+		if IMG_SAVE_PATH == "":
+			$FileDialog.popup_centered()
+		elif IMG_SAVE_PATH != "":
+			IMG_SAVE_PATH = $FileDialog.current_dir
+			IMG_SAVE_PATH += "/" + episode_number_to_string(CURRENT_EPISODE_NUM) + "_" + CURRENT_EPISODE_NAME
+			request_for_image()
 	else:
 		print_on_output_display("No Imgage url was Found...")
 
@@ -223,7 +231,9 @@ func _on_downloadMultipleImgs_request_completed(result, response_code, _headers,
 		# when all the img urls are downloaded
 		print_on_output_display("Download Complete")
 		if CURRENT_EPISODE_NUM == END_EPISODE_NUM:
+			IMG_SAVE_PATH = ""
 			print_on_output_display("ALL DOWNLOADS COMPLETED")
+		# when there are episode yet to download
 		elif CURRENT_EPISODE_NUM < END_EPISODE_NUM:
 			CURRENT_EPISODE_NUM += 1
 			
