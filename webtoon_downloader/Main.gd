@@ -14,14 +14,16 @@ var _output_display
 var _titleid_input
 var _episode_from_input
 var _episode_to_input
-
+var _download_button
+var _title_id_input
 
 func _ready():
 	_output_display = $UINode/OuputDisplay
 	_titleid_input = $UINode/TitleIdInput
 	_episode_from_input = $UINode/EpisodeFromInput
 	_episode_to_input = $UINode/EpisodeToInput
-
+	_download_button = $UINode/DownloadButton
+	_title_id_input = $UINode/TitleIdInput
 
 func get_titleid_val():
 	return _titleid_input.text.to_int()
@@ -106,6 +108,7 @@ func _on_getWebtoonPage_request_completed(_result, _response_code, _headers, bod
 	if IMG_URLS != []:
 		# downlaoding single episode
 		if IMG_SAVE_PATH == "":
+			$FileDialog.invalidate()
 			$FileDialog.popup_centered()
 		elif IMG_SAVE_PATH != "":
 			IMG_SAVE_PATH = $FileDialog.current_dir
@@ -173,8 +176,12 @@ func _on_FileDialog_confirmed():
 	IMG_SAVE_PATH = $FileDialog.current_dir
 	IMG_SAVE_PATH += "/" + episode_number_to_string(CURRENT_EPISODE_NUM) + "_" + CURRENT_EPISODE_NAME
 	request_for_image()
-
-
+	
+	# disable button and episode range input temporarily
+	_episode_from_input.set_editable(false)
+	_episode_to_input.set_editable(false)
+	_download_button.disabled = true
+	_title_id_input.readonly = true
 # ***** 4 *****
 func request_for_image():
 	var request_header = ["User-Agent: Mozilla/5.1 (Windows NT 10.1; Win64; x64) AppleWebKit/536.37 (KHTML, like Gecko) Chrome/91.1.4480.73 Safari/535.36",
@@ -232,6 +239,11 @@ func _on_downloadMultipleImgs_request_completed(result, response_code, _headers,
 		print_on_output_display("Download Complete")
 		if CURRENT_EPISODE_NUM == END_EPISODE_NUM:
 			IMG_SAVE_PATH = ""
+			# re-enable button and episode range input
+			_episode_from_input.set_editable(true)
+			_episode_to_input.set_editable(true)
+			_download_button.disabled = false
+			_title_id_input.readonly = false
 			print_on_output_display("ALL DOWNLOADS COMPLETED")
 		# when there are episode yet to download
 		elif CURRENT_EPISODE_NUM < END_EPISODE_NUM:
